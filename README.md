@@ -14,7 +14,7 @@ Doesn't work on Essentials versions 20.1 and older.
 Follow FL's [Essentials plugin installation instructions](https://github.com/FL-/Misc/tree/main/Guides/EssentialsInstallPlugin).
 
 ## How to Use
-Look at [Script](/Content/Plugins/Tilt%20Labyrint/001_Tilt%20Labyrinth.rb) for instructions.
+Look at [Script](/Content/Plugins/Tilt%20Labyrinth/001_Tilt%20Labyrinth.rb) for instructions.
 
 ## Download
 [![](https://custom-icon-badges.demolab.com/badge/-Download-red?style=for-the-badge&logo=download&logoColor=white)](../../archive/refs/heads/main.zip)
