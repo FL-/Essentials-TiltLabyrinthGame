@@ -1,0 +1,4 @@
+Name      = Tilt Labyrinth Game
+Version   = 1.0
+Website   = XXX
+Credits   = FL
