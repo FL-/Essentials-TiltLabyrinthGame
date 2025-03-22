@@ -1,4 +1,4 @@
 Name      = Tilt Labyrinth Game
-Version   = 1.0
+Version   = 1.0.1
 Website   = https://www.pokecommunity.com/threads/535067/
 Credits   = FL

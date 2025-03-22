@@ -9,7 +9,7 @@
 #
 # To call this script, use the script command 'TiltLabyrinth.play(X)', where X
 # is the labyrinth index. There are 5 valid labyrinths (starting in 1) as
-# samples. This method will return the remaining time (in second, as a float)
+# samples. This method will return the time spent (in second, as a float)
 # or nil if the player loses or cancels.
 #
 # There are optional parameters, in order:
@@ -44,6 +44,9 @@
 #
 # The same way that is an exit graphic, you can add an image as entrace graphic,
 # without changing code or settings.
+#
+# Since game returns nil when player doesn't finish the puzzle, you can use
+# `TiltLabyrinth.play(3) !=nil` in a control branch to know if player finished.
 #
 #===============================================================================
 
@@ -142,6 +145,9 @@ module TiltLabyrinth
 
   # Count current ball in the display (so 3 balls will display "Balls: 3").
   COUNT_CURRENT_BALL = false
+
+  # When true, pause time while the exit confirm dialog is open.
+  PAUSE_TIME = true
 
   class Board
     attr_reader   :labyrinth
@@ -665,7 +671,7 @@ module TiltLabyrinth
         Graphics.update
         Input.update
         self.update
-        if Input.trigger?(Input::B) && canCancel && pbConfirmMessage(_INTL("Exit?")){ update }
+        if Input.trigger?(Input::B) && canCancel && pbConfirmMessage(_INTL("Exit?")){ update_at_prompt }
           pbPlayCursorSE
           break
         end
@@ -713,6 +719,12 @@ module TiltLabyrinth
           @sprites["#{base_key}#{i}"].angle = angle
         end
       end
+    end
+    
+    def update_at_prompt
+      update
+      @screen.update(true)
+      draw_text if should_redraw_text?
     end
     
     def update
@@ -763,10 +775,12 @@ module TiltLabyrinth
       @board.angle += dir*TILT_ANGLE_SPEED*TiltLabyrinth.delta
     end
 
-    def update
-      @board.update_ball
-      @completed = true if @board.ball_finished_this_frame
-      @time_count+=TiltLabyrinth.delta
+    def update(prompt_active=false)
+      if !prompt_active
+        @board.update_ball
+        @completed = true if @board.ball_finished_this_frame
+      end
+      @time_count+=TiltLabyrinth.delta if !prompt_active || !PAUSE_TIME
     end
 
     def has_time_limit?
