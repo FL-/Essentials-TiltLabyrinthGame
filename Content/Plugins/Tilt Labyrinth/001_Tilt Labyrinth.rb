@@ -226,7 +226,7 @@ module TiltLabyrinth
     # Find a line with different size than @width.
     # Returns the line index or nil if wasn't found
     def find_invalid_line
-      return @grid.find_index{|line| line.size != @width}
+      return Bridge.find_index(@grid){|line| line.size != @width}
     end
 
     def validate_grid
@@ -263,7 +263,7 @@ module TiltLabyrinth
     def update(board)
       @at_hole_this_frame = false
       @last_grid_pos = @grid_pos.clone
-      apply_gravity(board.labyrinth.gravity*TiltLabyrinth.delta, TiltLabyrinth.round_angle(board.angle))
+      apply_gravity(board.labyrinth.gravity*Bridge.formatted_delta, TiltLabyrinth.round_angle(board.angle))
       update_direction(0, board)
       update_direction(1, board)
       if @grid_pos[0] != @last_grid_pos[0] || @grid_pos[1] != @last_grid_pos[1]
@@ -288,7 +288,7 @@ module TiltLabyrinth
     # checked in positive axis and vice-versa
     def update_direction_tiles(axis, tile_bonus, labyrinth)
       target_new_pos = [@grid_pos[0], @grid_pos[1]]
-      target_new_pos[axis] += @speed[axis]*TiltLabyrinth.delta + tile_bonus
+      target_new_pos[axis] += @speed[axis]*Bridge.formatted_delta + tile_bonus
       pos_to_check_array = all_pos_in_way(@grid_pos, target_new_pos, axis, (tile_bonus>0 ? 1 : -1))
       @grid_pos[axis] = target_new_pos[axis]
       for pos_to_check in pos_to_check_array
@@ -551,7 +551,7 @@ module TiltLabyrinth
       @sprites["overlay"]=BitmapSprite.new(Graphics.width, Graphics.height, @viewport)
       pbSetSystemFont(@sprites["overlay"].bitmap)
       draw_text
-      pbBGMPlay("Safari Zone")
+      pbBGMPlay(Bridge.bgm_path)
       pbFadeInAndShow(@sprites) { update }
     end
 
@@ -559,7 +559,7 @@ module TiltLabyrinth
       @sprites["overlay"].bitmap.clear
       @current_time = displayable_time_value
       @current_balls = displayable_ball_value if @screen.has_ball_limit?
-      pbDrawTextPositions(@sprites["overlay"].bitmap, create_text_args(Color.new(248,248,248),Color.new(0,0,0)))
+      Bridge.drawTextPositions(@sprites["overlay"].bitmap, create_text_args(Color.new(248,248,248),Color.new(0,0,0)))
     end
 
     def create_text_args(font_color, shadow_color)
@@ -671,7 +671,7 @@ module TiltLabyrinth
         Graphics.update
         Input.update
         self.update
-        if Input.trigger?(Input::B) && canCancel && pbConfirmMessage(_INTL("Exit?")){ update_at_prompt }
+        if Input.trigger?(Input::B) && canCancel && Bridge.confirmMessage(_INTL("Exit?")){ update_at_prompt }
           pbPlayCursorSE
           break
         end
@@ -685,8 +685,8 @@ module TiltLabyrinth
     end
 
     def update_sounds
-      pbSEPlay("Battle ball drop") if @screen.board.ball && @screen.board.ball.at_hole_this_frame
-      pbMEPlay("Bug Catching 3rd") if @screen.board.ball_finished_this_frame
+      pbSEPlay(Bridge.hole_se_path) if @screen.board.ball && @screen.board.ball.at_hole_this_frame
+      pbMEPlay(Bridge.victory_me_path) if @screen.board.ball_finished_this_frame
     end
 
     # Return 1 if pressed right or -1 if pressed left 
@@ -772,7 +772,7 @@ module TiltLabyrinth
     # Dir is 0, -1 or 1
     def update_angle(dir)
       return if dir==0
-      @board.angle += dir*TILT_ANGLE_SPEED*TiltLabyrinth.delta
+      @board.angle += dir*TILT_ANGLE_SPEED*Bridge.formatted_delta
     end
 
     def update(prompt_active=false)
@@ -780,7 +780,7 @@ module TiltLabyrinth
         @board.update_ball
         @completed = true if @board.ball_finished_this_frame
       end
-      @time_count+=TiltLabyrinth.delta if !prompt_active || !PAUSE_TIME
+      @time_count+=Bridge.formatted_delta if !prompt_active || !PAUSE_TIME
     end
 
     def has_time_limit?
@@ -822,10 +822,6 @@ module TiltLabyrinth
     return angle.round
   end
 
-  def delta
-    return [0.1, Graphics.delta].min # Avoid too big, or balls will surpass tiles
-  end
-
   def distance(a_pos, b_pos)
     ret = 0
     for i in 0...2
@@ -852,5 +848,68 @@ module TiltLabyrinth
       ret=screen.start(can_cancel)
     }
     return ret
+  end
+
+  # Essentials multiversion layer
+  module Bridge
+    @@audioNameHash = nil
+    module_function
+
+    def major_version
+      ret = 0
+      if defined?(Essentials)
+        ret = Essentials::VERSION.split(".")[0].to_i
+      elsif defined?(ESSENTIALS_VERSION)
+        ret = ESSENTIALS_VERSION.split(".")[0].to_i
+      elsif defined?(ESSENTIALSVERSION)
+        ret = ESSENTIALSVERSION.split(".")[0].to_i
+      end
+      return ret
+    end
+
+    MAJOR_VERSION = major_version
+
+    def formatted_delta
+      return 0.025 if MAJOR_VERSION < 21
+      return [0.1, Graphics.delta].min # Avoid too big, or balls will surpass tiles
+    end
+
+    def find_index(array, &block)
+      if MAJOR_VERSION < 19
+        for i in 0...array.length
+          return i if yield(array[i])
+        end
+        return nil
+      end
+      return array.find_index(&block)
+    end
+
+    def confirmMessage(string, &block)
+      return Kernel.pbConfirmMessage(string, &block) if MAJOR_VERSION < 20
+      return pbConfirmMessage(string, &block)
+    end
+
+    def drawTextPositions(bitmap,textpos)
+      if MAJOR_VERSION < 20
+        for singleTextPos in textpos
+          singleTextPos[2] -= MAJOR_VERSION==19 ? 12 : 6
+        end
+      end
+      return pbDrawTextPositions(bitmap,textpos)
+    end
+
+    def hole_se_path
+      return "balldrop" if MAJOR_VERSION < 17
+      return "Battle ball drop"
+    end
+
+    def victory_me_path
+      return "Voltorb Flip win"
+    end
+
+    def bgm_path
+      return "021-Field04" if MAJOR_VERSION < 17
+      return "Safari Zone"
+    end
   end
 end

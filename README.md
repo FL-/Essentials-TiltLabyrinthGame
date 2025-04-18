@@ -7,11 +7,8 @@ This script is for Pokémon Essentials. It's a simple minigame where the player 
 ![](Screens/screen2.png)
 ![](Screens/screen3.png)
 
-## Compatibility
-Doesn't work on Essentials versions 20.1 and older.
-
 ## Installation
-Follow FL's [Essentials plugin installation instructions](https://github.com/FL-/Misc/tree/main/Guides/EssentialsInstallPlugin).
+Follow FL's [Essentials plugin installation instructions](https://github.com/FL-/Misc/tree/main/Guides/EssentialsInstallPlugin). For Essentials version 18.1 or lower, put the script above main.
 
 ## How to Use
 Look at [Script](/Content/Plugins/Tilt%20Labyrinth/001_Tilt%20Labyrinth.rb) for instructions.
